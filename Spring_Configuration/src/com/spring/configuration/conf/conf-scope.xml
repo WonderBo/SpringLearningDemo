@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+         http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+         
+   
+   <!-- 基本作用域为singleton与prototype，当把一个bean定义设置为singleton作用域时(scope 默认值)，Spring IOC容器只会创建该bean定义的唯一实例(共享)。
+   这个单一实例会被存储到单例缓存（singleton cache）中，并且所有针对该bean的后续请求和引用都将返回被缓存的对象实例  -->  
+   
+   <!-- prototype作用域部署的bean，每一次请求（将其注入到另一个bean中，或者以程序的方式调用容器的getBean()方法）都会产生一个新的bean实例，相当与一个new的操作.
+   对有状态的bean应该使用prototype作用域，而对无状态的bean则应该使用singleton作用域 (Service层、Dao层用默认singleton，Struts2的Action中，scope要配成prototype作用域)-->   
+   
+   <!-- 其余三种bean的作用域（web作用域）为request，session，globalSession，用户在使用Spring的WebXmlApplicationContext（Web应用环境）时可以考虑,详情见网页收藏 -->
+   
+   <bean id="car" class="com.spring.configuration.bean.scope.Car" scope="prototype"/>
+
+	<!-- p:car-ref（简化配置方式）: p:car-ref对应的是boss里的setCar方法进行关联注入，而非boss里的car属性，具体原因为属性描述（PropertyDescriptor）数组，详情见reflection项目的BeanFactory类 -->
+   <bean id="boss1" class="com.spring.configuration.bean.scope.Boss" p:car-ref="car" />
+   <bean id="boss2" class="com.spring.configuration.bean.scope.Boss" p:car-ref="car" />
+   <bean id="boss3" class="com.spring.configuration.bean.scope.Boss" p:car-ref="car" />
+</beans>

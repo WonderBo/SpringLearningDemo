@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping>
+	<class name="com.spring.bean.BookStock" table="bookstock">
+		<id name="isbn" column="isbn" />
+		<property name="stock" column="stock" />
+	</class>
+</hibernate-mapping>
