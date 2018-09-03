@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app version="2.4"
+         xmlns="http://java.sun.com/xml/ns/j2ee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd">
+
+ <display-name>Spring MVC Study</display-name>
+ 
+ <!-- Spring应用上下文，理解层次化的ApplicationContext -->
+ <!-- 
+ 加载顺序：第一步：项目启动时，容器加载web.xml
+		  第二步：加载上下文配置即ContextLoaderListener，此处会将引入的配置文件逐一进行加载。
+		  第三步：初始化MVC上下文，即加载注解驱动，视图解析器，web组件等。 
+ 注意： 1.上下文配置尽量放置在web.xml顶部，防止意外的错误。并且，一旦上下文配置文件加载之后便能够在全局范围内被使用。
+ 	  2.前端控制器只负责controller层的配置解析。其他的配置交给上下文来配置管理。
+ -->
+ 
+ <!-- contextConfigLocation: 用于(加载Spring的Bean)的配置文件；注意：此名称固定 -->
+ <context-param>
+ 	<param-name>contextConfigLocation</param-name>
+ 	<param-value>classpath:spring/applicationContext*.xml</param-value>
+ </context-param>
+ <!-- listener: 监听(加载bean)的实现类，此处也是固定，默认使用webapplicationContext -->
+ <listener>
+ 	<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+ </listener>
+  
+<context-param>  
+	<param-name>log4jConfigLocation</param-name>  
+	<param-value>classpath:log4j.properties</param-value>  
+</context-param>
+<listener>
+   <listener-class>org.springframework.web.util.Log4jConfigListener</listener-class> 
+</listener>
+
+<filter>  
+	<filter-name>encoding</filter-name>  
+	<filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>  
+	<init-param>  
+		<param-name>encoding</param-name>  
+		<param-value>utf-8</param-value>  
+	</init-param>  
+</filter>  
+<filter-mapping>  
+	<filter-name>encoding</filter-name>  
+	<url-pattern>/*</url-pattern>  
+</filter-mapping>
+
+<!--  Tomcat, Jetty默认 Servlet的名字:default来处理静态文件,如jpg,js,css
+	    注意：要写在DispatcherServlet的前面，让defaultServlet先拦截，这个就不会进入Spring
+<servlet-mapping>  
+	<servlet-name>default</servlet-name>  
+	<url-pattern>*.jpg</url-pattern>  
+</servlet-mapping>
+  -->
+ 
+ <!-- DispatcherServlet: Spring MVC的核心（dispatcherServlet可以配置多个） -->
+ <servlet>
+ 	<!-- servlet-name：其值可以自定义，但是需要主要的是要与下方的<servlet-mapping>中的<servlet-name>对应，保持一致 -->
+ 	<servlet-name>mvc-dispatcher</servlet-name>
+ 	<!-- servlet-class：servlet(前端控制器)所属的位置，由包名+类名组成 -->
+ 	<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+ 	<!-- contextConfigLocation：DispatcherServlet对应的上下文配置，默认为/WEB-INF/$servlet-name$-servlet.xml-->
+ 	<init-param>
+ 		<param-name>contextConfigLocation</param-name>
+ 		<param-value>classpath:spring/mvc-dispatcher-servlet.xml</param-value>
+ 	</init-param>
+ 	<!-- load-on-startup：数字表示启动顺序，数字越小表示启动级别越高。注意其最小值为0.当是一个负数时或者没有指定时，则指示容器在该servlet被选择时才加载 -->
+ 	<load-on-startup>1</load-on-startup>
+ </servlet>
+ <servlet-mapping>
+ 	<servlet-name>mvc-dispatcher</servlet-name>
+ 	<!-- url-pattern：前端控制器需要拦截的请求的地址形式。常见的配置为：*.do，*.htm等。
+ 		  但是注意“/*”表示拦截所有的请求，这时我们将不会在程序中捕获任何请求，因为所有的请求都被前端控制器给拦截下来 -->
+ 	<url-pattern>/</url-pattern>
+ </servlet-mapping>
+ 
+</web-app>
+        

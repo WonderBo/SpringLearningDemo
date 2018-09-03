@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xsi:schemaLocation="
+       	http://www.springframework.org/schema/beans 
+       	http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context 
+        http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/mvc 
+        http://www.springframework.org/schema/mvc/spring-mvc.xsd">
+
+	<!-- 本配置文件是工名为mvc-dispatcher的DispatcherServlet使用，提供其相关的Spring MVC配置 -->
+<!-- 	
+	请求分发 -> 业务调度 -> 视图解析 -> 视图渲染
+	1.前端控制器（DispatcherServlet）根据HandlerMapper配置，负责分发所有的请求。
+	2.HandlerAdapter选择具体的Handler即controller处理当前请求。
+	3.controller处理完成之后返回一个与业务相对应的ModelAndView交还给前端控制器。
+	4.前端控制器根据视图的规则（ViewResolver）解析出具体的视图（View）。
+	5.前端控制器根据接收到的Model进行视图渲染，即生成用户交互界面。 
+-->
+
+	<!-- 启用Spring基于annotation的DI，使用户可以在Spring MVC中使用Spring的强大功能。 激活 @Required 
+		 @Autowired,JSR 250's @PostConstruct, @PreDestroy and @Resource等标注 【使用<context:annotation-config/>隐式地向 
+		 Spring容器注册AutowiredAnnotationBeanPostProcessor、RequiredAnnotationBeanPostProcessor、
+		 CommonAnnotationBeanPostProcessor以及PersistenceAnnotationBeanPostProcessor这4个BeanPostProcessor】-->
+	<!-- <context:annotation-config /> -->
+
+	<!-- DispatcherServlet上下文，只搜索@Controller标注的类（bean），不搜索其他标注的类(bean)，如@Service
+		 【配置扫描包路径选项其实也包含了自动注入上述4个BeanPostProcessor的功能，因此当使用<context:component-scan/>后，
+		  即可将<context:annotation-config/>省去】 -->
+	<context:component-scan base-package="com.cqu.edu.controller">
+		<context:include-filter type="annotation" expression="org.springframework.stereotype.Controller" />
+	</context:component-scan>
+	
+	<!-- 扩充了注解驱动，可以将请求参数绑定到控制器参数 -->
+	<mvc:annotation-driven />
+	
+	<!-- HandlerMapping,无需配置，Sping MVC可以默认启动。 DefaultAnnotationHandlerMapping 
+		 annotation-driven HandlerMapping -->
+
+	<!-- 静态资源处理，css，js，imgs( <url-pattern>/</url-pattern>把所有的请求都交给spring去处理了，
+		  而所有可用的请求url都是在Controller里使用类似@RequestMapping(value = "/login/{user}")这样的注解配置的，
+		  这样的话对js/css/jpg/gif等静态资源的访问就会得不到 ) 
+		 mapping：映射url地址，两个*表示映射路径下所有的URL； location：本地资源路径，注意必须是webapp根目录下的路径。-->
+	<mvc:default-servlet-handler />
+	<!-- <mvc:resources mapping="/image/**" location="/image/" /> -->
+
+	<!-- 全局异常处理配置 -->
+	<bean id="exceptionResolver" class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver">
+		<property name="exceptionMappings">
+			<props>
+				<prop key="java.lang.Exception">errors/error</prop>
+				<prop key="java.lang.Throwable">errors/err</prop>
+			</props>
+		</property>
+		<property name="statusCodes">
+			<props>
+				<prop key="errors/error">500</prop>
+				<prop key="errors/404">404</prop>
+			</props>
+		</property>
+		<!-- 设置日志输出级别，不定义则默认不输出警告等错误日志信息 -->
+		<property name="warnLogCategory" value="WARN"></property>
+		<!-- 默认错误页面，当找不到上面mappings中指定的异常对应视图时，使用本默认配置 -->
+		<property name="defaultErrorView" value="errors/error"></property>
+		<!-- 默认HTTP状态码 -->
+		<property name="defaultStatusCode" value="500"></property>
+	</bean>
+
+	<!-- 配置ViewResolver， 可以用多个ViewResolver， 使用order属性排序， InternalResourceViewResolver放在最后。 -->
+	<!-- 当经过其它视图解析器时，如果能解析就解析而且不会再继续往下传播。如果不能解析就返回null，这样后面的解析器才能处理。
+		  但是对于解析器InternalResourceViewResolver来说，不管能不能解析它都不会返回null，也就是说它拦截了所有的逻辑视图，
+		  让后续的解析器得不到执行，所以InternalResourceViewResolver必须放在最后。 -->
+	<!-- ContentNegotiatingViewResolver内容协商视图解析器：该视图解析器允许你用同样的内容数据来呈现不同的view（同一资源,多种表述） -->
+ 	<bean class="org.springframework.web.servlet.view.ContentNegotiatingViewResolver">
+		<!-- order：解析器的执行顺序 -->
+		<property name="order" value="1"/>
+		
+		<!-- favorPathExtension(是否启用扩展名支持，默认就是true);
+		favorParameter(是否启用参数支持，默认就是true);
+		ignoreAcceptHeader(是否忽略掉accept header，默认就是false) -->
+		<property name="ignoreAcceptHeader" value="true"/>
+		
+		<!-- 扩展名到mimeType的映射，ContentNegotiatingViewResolver是根据客户提交的MimeType(如 text/html,application/xml)，
+		来跟服务端的一组viewResover的MimeType相比较,如果符合,即返回viewResover的数据 -->
+		<property name="mediaTypes">
+			<map>
+				<entry key="json" value="application/json"/>
+				<entry key="xml" value="application/json"/>
+				<entry key="htm" value="text/html"/>
+			</map>
+		</property>
+		
+		<property name="defaultViews">
+			<list>
+				<!-- JSON View -->
+				<bean 
+					class="org.springframework.web.servlet.view.json.MappingJackson2JsonView">
+				</bean>
+			</list>
+		</property>
+	</bean>
+	
+	<!-- 上面没匹配到则会使用这个视图解析器 -->
+	<bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="viewClass" value="org.springframework.web.servlet.view.JstlView" />
+		<property name="prefix" value="/WEB-INF/page/" />					<!-- 路径前缀 -->
+		<property name="suffix" value=".jsp" />								<!-- 路径后缀 -->
+	</bean>
+	
+	<!-- 200*1024*1024即200M，resolveLazily属性启用是为了推迟文件解析，以便捕获文件大小异常  -->
+	<!-- 当配置CommonsMultipartResolver解析器后，spring会对用户请求进行拦截，判断是否为附件上传类型，既enctype="multipart/form-data"，
+	如果是，则会对请求流进行处理，将其转换为DefaultMultipartHttpServletRequest对象，该对象封装了附件内容 -->
+	<bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<property name="maxUploadSize" value="209715200"/>
+		<property name="defaultEncoding" value="UTF-8"/>
+		<property name="resolveLazily" value="true"/>	
+	</bean>
+	
+	<!-- 注意拦截器(基于action)与过滤器(基于web容器)的区别，参考网上资料 -->
+	<!-- 注意拦截器链配置顺序与执行顺序的关系，以及拦截器中各个方法调用顺序 -->
+	<mvc:interceptors>
+		<!-- 对单一指定的controller进行拦截 -->
+		<mvc:interceptor>
+			<mvc:mapping path="/hello/mvc" />
+			<bean class="com.cqu.edu.controller.HelloMvcInterceptor" />
+		</mvc:interceptor>
+		
+		<!-- 全局范围内的拦截器 -->
+		<bean class="com.cqu.edu.controller.AllInterceptor" />
+	</mvc:interceptors>
+</beans>
