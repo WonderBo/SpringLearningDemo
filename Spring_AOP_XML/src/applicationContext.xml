@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans
+	xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+						http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+						http://www.springframework.org/schema/aop
+						http://www.springframework.org/schema/aop/spring-aop-3.0.xsd
+						">
+		<!-- 基于XML Schema的Spring AOP与基于注解的Spring AOP原理类似，只是配置的地方与形式不同，原理及注意事项详情见Annotation下的LogAfterAdvice类 -->			
+		
+		<!-- 配置目标类 -->					
+		<bean id="userDAO" class="com.spring.test.UserDAOImpl" />
+		
+		
+		<!-- 配置切面 -->
+		<!-- 切面支持类 -->
+		<bean id="logBeforeAdvice" class="com.spring.test.LogBeforeAdvice" />
+		<bean id="logAfterAdvice" class="com.spring.test.LogAfterAdvice" />
+		<bean id="logAroundAdvice" class="com.spring.test.LogAroundAdvice" />
+		<bean id="logThrowAdvice" class="com.spring.test.LogThrowAdvice" />
+		<bean id="logReturnAdvice" class="com.spring.test.LogReturnAdvice" />
+		
+		<!-- 切面 = 切入点 + 通知  -->
+		
+		<!-- 切入点：根据作用范围切入点有3种：<aop:config>下，<aop:aspect>下(pointcut-ref属性通过id引用切入点)，匿名切入点Bean(pointcut属性指定切入点表达式)-->
+		<!-- 通知 = 连接点(由切入点决定) + 增强逻辑（增强方法） -->
+		
+		<!-- Advisor：<aop:advisor pointcut="切入点表达式" pointcut-ref="切入点Bean引用" advice-ref="通知API实现引用"/>
+			 Advisor与切面区别：实现方式不同（Advisor通过实现对应的增强接口），使用场景不同（Advisor主要适用于事务控制）
+			  不推荐使用Advisor，除了在进行事务控制的情况下，其他情况一般不推荐使用该方式，该方式属于侵入式设计，必须实现通知API  
+		-->
+		
+		<!-- 前置通知：<aop:before pointcut="切入点表达式" pointcut-ref="切入点Bean引用" method="前置通知实现方法名" arg-names="前置通知实现方法参数列表参数名字"/> 
+			 (1)pointcut和pointcut-ref：二者选一，指定切入点；
+			 (2)method：指定前置通知实现方法名，如果是多态需要加上参数类型，多个用“，”隔开，如beforeAdvice(Java.lang.String)；
+			 (3)arg-names：指定通知实现方法的参数名字，多个用“，”分隔，可选
+		-->
+		<!-- 后置返回通知：<aop:after-returning pointcut="切入点表达式"  pointcut-ref="切入点Bean引用"    
+    						  method="后置返回通知实现方法名"    
+    						  arg-names="后置返回通知实现方法参数列表参数名字"    
+    						  returning="返回值对应的后置返回通知实现方法参数名" />
+    		 (1)pointcut，pointcut-ref，method，arg-names：同上 
+    		 (2)returning：定义一个名字，该名字用于匹配通知实现方法的一个参数名，当目标方法执行正常返回后，将把目标方法返回值传给通知方法；
+    		 			returning限定了只有目标方法返回值与通知方法相应参数类型匹配时才能执行后置返回通知，否则不执行，对于returning对应的通知方法参数为Object类型将匹配任何目标返回值。
+    	-->
+    	<!-- 后置异常通知：<aop:after-throwing pointcut="切入点表达式"  pointcut-ref="切入点Bean引用"    
+                              method="后置异常通知实现方法名"    
+                              arg-names="后置异常通知实现方法参数列表参数名字"    
+                              throwing="将抛出的异常赋值给的通知实现方法参数名"/>
+             (1)pointcut，pointcut-ref，method，arg-names：同上
+             (2)throwing：定义一个名字，该名字用于匹配通知实现方法的一个参数名，当目标方法抛出异常返回后，将把目标方法抛出的异常传给通知方法；
+             			throwing限定了只有目标方法抛出的异常匹配与通知方法相应参数异常类型时才能执行后置异常通知，否则不执行，对于throwing对应的通知方法参数为Throwable类型将匹配任何异常。
+        -->
+        <!-- 后置最终通知：<aop:after pointcut="切入点表达式"  pointcut-ref="切入点Bean引用" method="后置最终通知实现方法名" arg-names="后置最终通知实现方法参数列表参数名字"/>
+        	 (1)pointcut，pointcut-ref，method，arg-names：同上
+        -->
+        <!-- 环绕通知：<aop:around pointcut="切入点表达式"  pointcut-ref="切入点Bean引用" method="环绕通知实现方法名" arg-names="环绕通知实现方法参数列表参数名字"/>
+        	 (1)pointcut，pointcut-ref，method，arg-names：同上
+        -->
+    	
+		<aop:config>  
+			<aop:pointcut id="pc_5" expression="execution(* com.spring.test.UserDAO.*(..)) and args(param,..)" />
+			
+ 			<aop:aspect ref="logBeforeAdvice">
+				<aop:pointcut id="pc" expression="execution(* com.spring.test.UserDAO.*(..))" />
+				<aop:before pointcut-ref="pc" method="beforeAdvice" />
+			</aop:aspect>
+			
+			<aop:aspect ref="logAfterAdvice">
+				<aop:pointcut id="pc_2" expression="execution(* com.spring.test.UserDAO.*(..))" />
+				<aop:after pointcut-ref="pc_2" method="afterFinallyAdvice" />
+			</aop:aspect>
+			
+			<aop:aspect ref="logAroundAdvice">
+				<aop:pointcut id="pc_3" expression="execution(* com.spring.test.UserDAO.*(..))" />
+				<aop:around pointcut-ref="pc_3" method="aroundAdvice" />
+			</aop:aspect> 
+			
+			<aop:aspect ref="logThrowAdvice">
+				<aop:pointcut id="pc_4" expression="execution(* com.spring.test.UserDAO.*(..))" />
+				<aop:after-throwing pointcut-ref="pc_4" method="afterThrowingAdvice" throwing="ex" />
+			</aop:aspect>
+			
+			<aop:aspect ref="logReturnAdvice">
+				<aop:after-returning pointcut-ref="pc_5" method="afterReturningAdvice" returning="retVal" />
+			</aop:aspect>
+		</aop:config>
+
+</beans>

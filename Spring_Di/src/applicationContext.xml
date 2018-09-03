@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans
+	xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+		
+		<!-- spring的配置文件中，bean就相当于一个特定对象，规定了实例化形式与依赖注入值，具体的实例化与依赖注入工作由IOC容器来完成 -->
+		
+		<!-- spring依赖注入方法：属性注入方法，构造函数注入方法，，接口注入方法（工厂方法注入方法其实属于bean实例化方法） -->
+		<!-- 属性注入方法：1.使用默认构造方法对bean进行实例化；2.使用setXxx方法注入Bean的属性值或者依赖对象【setXxx方法和property元素name属性中的xxx满足Sun JavaBean的属性命名规范（xxx前两个字母大小写一致，一般尽量都小写开头）】 -->
+		<!-- 属性的写入(注入)或者读取，都是根据属性描述器数组（反射机制）获得各属性（由set与get方法获得的属性）的读和写的方法，然后通过这些方法（setXxx方法与getXxx方法）完成写读，与类的属性名称无关 -->
+		<!-- 构造函数注入方法：在bean实例化的同时对属性进行设置，在实例化后即可使用（类型匹配入参，索引匹配入参，联合使用类型和索引匹配入参，自身类型反射匹配入参） -->
+		<!-- 使用构造函数注入需要有入参对象都已经准备就绪的前提，因此存在循环依赖问题（类似于死锁），解决办法为改为属性注入 -->
+		<!-- 工厂方法注入方法分为静态工厂方法和非静态工厂方法，具体见Spring_Configuration项目的instance -->
+		
+		<!-- spring提供方法注入（lookup-method），来对singleton作用域bean中的prototype作用域属性bean进行“入参”，使该单例bean中的属性bean不为单例（可以多次实例化） -->
+		
+		<!-- spring中bean之间的关系有三种：继承关系，依赖关系，引用关系 -->
+		<!-- 继承关系（abstract，parent属性）用于减少代码量，其中父bean不会被实例化，子bean与父bean相同的property会被覆盖，不同的则继承 -->
+		<!-- 依赖关系（depends-on属性）用于决定实例化顺序，depends-on关联的bean先进行实例化，其中关联的bean可以为多个，用逗号隔开 -->
+		<!-- 引用关系（ref或者idref元素）用于引用另外一个bean，其中使用idref可以在容器启动时检查引用关系的正确性，可以提前发现错误配置信息；而使用ref只有在实例化时才会发现错误 -->
+		
+		<!-- spring在将设置值注入到依赖值时，会判断依赖值的类型【（个人感觉）根据属性描述】，并自动将设置值转换为对应的数据类型，因此value元素中并未对数字与字符串做区分，如加“” -->
+		<!-- 参数注入分为原始配置方式与简化配置方式，效果相同 -->
+		
+		<bean id="cat" class="com.spring.bean.Cat">
+			<!-- 字面值参数注入，注意xml特殊实体符号的两种注入方法 -->
+			<!-- 字面值简化配置方式 -->
+			<property name="name" value="kity"></property>
+			<!-- 字面值原始配置方式 -->
+			<property name="age">
+				<value>2</value>
+			</property>
+		</bean>	
+		
+		<bean id="person" class="com.spring.bean.Person">
+			<!-- 引用其它bean参数注入，ref元素引用其它bean的属性有bean（当前容器和父容器），local（当前容器），parent（父容器） -->
+			<!-- 内部bean用法同匿名内部类一样 -->
+			<!-- 级联属性通过 . 进行连接，例如property name="a.b"实际操作为getA().setB() -->
+			<property name="cat">
+				<ref bean="cat"/>
+			</property>
+			<property name="name" value="jack"></property>
+			
+			<!-- 集合类型属性：List,Set,Map,Properties -->
+			<!-- List类型属性 -->
+			<!-- 提示：一个属性类型可以用字面值进行配值，那么该类型对应的数组类型的属性，比如字符串数组，可以采用List方式进行配值 -->
+			<property name="list">
+				<list>
+					<value>1</value>
+					<value>2</value>
+				</list>
+			</property>
+			<!-- Set类型属性（与List类似） -->
+			<property name="set">
+				<set>
+					<value>a</value>
+					<value>b</value>
+					<value>c</value>
+				</set>
+			</property>
+			<!-- Map类型属性 -->
+			<!-- 注意键值分别为字面值与bean时的配置区别，在原始配置方式中，其中的value元素并不代表键值对中的值，而是代表其类型是字面值，其类型为bean时用ref元素 -->
+			<property name="map">
+				<map>
+					<entry>
+						<key>
+							<value>1</value>
+						</key>
+						<value>one</value>
+					</entry>
+					<entry>
+						<key>
+							<value>2</value>
+						</key>
+						<value>two</value>
+					</entry>
+				</map>
+			</property>
+			<!-- Properties类型属性 -->
+			<!-- 其与Map大部分类似，算是Map类型的特例，区别在于Map可以是任意类型，Properties的键与值都必须是字符串，因此配置较简单，无value元素 -->
+			<property name="pro">
+				<props>
+					<prop key="tel">12345</prop>
+					<prop key="name">jack</prop>
+				</props>
+			</property>
+		</bean>
+</beans>

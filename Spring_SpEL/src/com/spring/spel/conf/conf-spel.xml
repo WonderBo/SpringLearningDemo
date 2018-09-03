@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="  
+	          http://www.springframework.org/schema/beans  
+	          http://www.springframework.org/schema/beans/spring-beans-3.0.xsd 
+	          http://www.springframework.org/schema/util 
+	          http://www.springframework.org/schema/util/spring-util-3.0.xsd   
+	          http://www.springframework.org/schema/context  
+	          http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+	
+	<!-- 由于SpEl表达式为字符串，难以检查与测试，因此在一般情况下尽量不要使用，只有在传统装配方式很难或者不能完成的时候才考虑使用SpEL -->
+	
+	<!-- 启动注解处理器 -->
+	<context:annotation-config />
+	
+	<!-- SpEL在xml文件中的格式为：“#{SpEL表达式}” -->
+	<bean id="world" class="java.lang.String" >
+		<constructor-arg value="#{'World!'}" />
+	</bean>
+	
+	<!-- 多个SpEL串行连接 -->
+	<bean id="hello1" class="java.lang.String">
+		<constructor-arg value="#{'Hello'}#{world}" />
+	</bean>
+	
+	<!-- 单个SpEL内部用“ + ”连接内容 -->
+	<bean id="hello2" class="java.lang.String">
+		<constructor-arg value="#{'Hello' + world}" />
+		<!-- 多个SpEL之间不可以嵌套 -->
+		<!-- <constructor-arg value="#{'Hello'#{world}}" /> -->
+	</bean>
+	
+	<!-- SpEL内部可以用@bean名或者直接用bean名来引用容器中已存在的bean -->
+	<bean id="hello3" class="java.lang.String">
+		<constructor-arg value="#{'Hello' + @world}" />
+	</bean>
+	
+	<!-- @Value（SpEL表达式）注解注入 -->
+	<bean id="helloBean1" class="com.spring.spel.intro.AnnoExpression" />
+	<!-- <property>的setter注入将覆盖掉@Value注解值 -->
+	<bean id="helloBean2" class="com.spring.spel.intro.AnnoExpression">
+		<property name="str" value="hahaha" />
+	</bean>
+	
+	
+	<!-- SpEL的使用范围(字面值) -->
+	<bean id="spelLiteral" class="com.spring.spel.range.SpelLiteral">
+		<!-- 整型 -->
+		<property name="count" value="#{5}" />
+		<!-- SpEL表达式与非SpEL表达式混合使用 -->
+		<property name="message" value="The value is #{5}" />
+		<!-- 浮点型 -->
+		<property name="frequency" value="#{89.5}" />
+		<!-- 科学计数法 -->
+		<property name="capacity" value="#{1e4}" />
+		<!-- 单双引号混搭表示字符串 -->
+		<property name="name1" value="#{'Chunk'}" />
+		<property name="name2" value='#{"Chunk"}' />
+		<!-- 布尔型 -->
+		<property name="enabled" value="#{false}" />
+	</bean>
+	
+	<!-- SpEl的使用范围(类) -->
+	<bean id="spelClass" class="com.spring.spel.range.SpelClass">
+		<!-- T()运算符调用类作用域的方法与常量 -->
+		<property name="PI" value="#{T(java.lang.Math).PI}" />
+		<property name="randomNumber" value="#{T(java.lang.Math).random()}" />
+	</bean>
+	
+	<!-- SpEL的使用范围(Bean) -->
+	<bean id="spelBean1" class="com.spring.spel.range.SpelBean">
+		<!-- 引用Bean -->
+		<property name="song" value="#{world}" />
+	</bean>
+	<bean id="spelBean2" class="com.spring.spel.range.SpelBean">
+		<!-- 引用Bean的属性（原理为bean2.setXxx(bean1.getXxx())） -->
+		<property name="song" value="#{spelBean1.song}" />
+	</bean>
+	<bean id="spelBean3" class="com.spring.spel.range.SpelBean">
+		<!-- 引用Bean的方法 -->
+		<property name="song" value="#{spelBean2.getSong()}" />
+<!-- 	<property name="song" value="#{spelBean2.getSong().toUpperCase()}" />
+		?.的作用是防止左边为NULL从而抛出空指针异常，如左为空则不再调用右边的方法
+		<property name="song" value="#{spelBean2.getSong()?.toUpperCase()}" />      -->
+	</bean>
+	
+	
+	<!-- SpEL的运算符(数值运算) -->
+	<!-- 为spelMath提供数值依赖注入 -->
+	<bean id="counter" class="com.spring.spel.oper.Counter">
+		<property name="total" value="#{100}" />
+		<property name="count" value="#{10}" />
+	</bean>
+	<bean id="spelMath" class="com.spring.spel.oper.SpelMath">
+		<!-- 加运算 -->
+		<property name="adjustedAmount" value="#{counter.total + 44}" />
+		<!-- 乘运算 -->
+		<property name="circumference" value="#{2 * T(java.lang.Math).PI * counter.total}" />
+		<!-- 除运算 -->
+		<property name="average" value="#{counter.total / counter.count}" />
+		<!-- 求余运算 -->
+		<property name="remainder" value="#{counter.total % counter.count}" />
+		<!-- 乘方运算 -->
+		<property name="area" value="#{T(java.lang.Math).PI * counter.total ^ 2}" />
+		<!-- 字符串连接 -->
+		<property name="fullName" value="#{'张' + ' ' + '三'}"></property>
+	</bean>
+	
+	<!-- SpEL的运算符(数值运算) -->
+	<bean id="spelComp" class="com.spring.spel.oper.SpelComp">
+		<!-- 由于类似<与<=在xml中有特殊含义，因此建议使用所有比较运算符与之对应的文本类型 -->
+		<!-- 等于 -->
+		<property name="equal" value="#{counter.total eq 100}" />
+		<!-- 小于 -->
+		<property name="lessThan" value="#{counter.total lt 1000}" />
+		<!-- 小于等于 -->
+		<property name="lessEqual" value="#{counter.total le 100}" />
+		<!-- 大于 -->
+		<property name="greaterThan" value="#{counter.total gt 1000}" />
+		<!-- 大于等于 -->
+		<property name="greaterEqual" value="#{counter.total ge 100}" />
+	</bean>
+	
+	<!-- SpEL的运算符(逻辑运算) -->
+	<bean id="spelLogic" class="com.spring.spel.oper.SpelLogic">
+		<!-- 与 -->
+		<property name="and" value="#{counter.total eq 100 and counter.count le 9.0}" />
+		<!-- 或 -->
+		<property name="or" value="#{counter.total eq 100 or counter.count le 9.0}" />
+		<!-- 非（not 或者 ！） -->
+		<property name="not" value="#{not (counter.count le 9.0)}" />
+	</bean>
+	
+	<!-- SpEL的运算符(条件运算(三目运算符)) -->
+	<bean id ="spelCond" class="com.spring.spel.oper.SpelCond">
+		<!-- if_else：上下两种表达方式相同（?:省去了中间重复的表达），一般用于根据是否为空再进行赋值 -->
+		<property name="myCount" value="#{counter.count != null ? counter.count : 99999.9}" />
+		<property name="yourCount" value="#{counter.count ?: 99999.9}" />
+	</bean>
+	
+	<!-- SpEL的运算符(正则表达式匹配) -->
+	<bean id="spelMatch" class="com.spring.spel.oper.SpelMatch">
+		<property name="match" value="#{world matches '.*?!'}" />
+	</bean>
+	
+	<!-- SpEL集合操作 -->
+	<!-- 相当于一个java.util.list类的bean，里面有多个city类的bean（注意：不需要在xml文件中单独对city类bean进行定义） -->
+	<util:list id="cities">
+		<bean class="com.spring.spel.list.City" p:name="Chicago" p:state="IL" p:population="2853114" />
+		<bean class="com.spring.spel.list.City" p:name="Atlanta" p:state="GA" p:population="537958" />
+		<bean class="com.spring.spel.list.City" p:name="Dallas" p:state="TX" p:population="1279910" />
+		<bean class="com.spring.spel.list.City" p:name="Houston" p:state="TX" p:population="2242193" />
+		<bean class="com.spring.spel.list.City" p:name="Odessa" p:state="TX" p:population="90943" />
+		<bean class="com.spring.spel.list.City" p:name="El Paso" p:state="TX" p:population="613190" />
+		<bean class="com.spring.spel.list.City" p:name="Jal" p:state="NM" p:population="1996" />
+		<bean class="com.spring.spel.list.City" p:name="Las Cruces" p:state="NM" p:population="91865" />
+	</util:list>
+	<!-- SpEL集合操作：访问集合成员，查询集合成员，投影集合 -->
+	<bean id="spelList" class="com.spring.spel.list.SpelList">
+		<!-- 访问集合成员(索引)，返回成员bean -->
+		<property name="chosenCity1" value="#{cities[2]}" />
+		<property name="chosenCity2" value="#{cities[T(java.lang.Math).random() * cities.size()]}" />
+		<!-- 查询集合成员(list.?[查询条件])，返回关于过滤后成员bean的List类bean -->
+		<property name="bigCities" value="#{cities.?[population gt 100000]}" />
+		<!-- 查询集合成员(list.^[查询条件])，返回过滤后List类bean的第一个成员bean -->
+		<property name="oneBigCity1" value="#{cities.^[population gt 100000]}" />
+		<!-- 查询集合成员(list.^[查询条件])，返回过滤后List类bean的最后一个成员bean -->
+		<property name="oneBigCity2" value="#{cities.$[population gt 100000]}" />
+		<!-- 投影集合(list.![含属性表达式]，原List类bean的每个成员bean选取特定属性，加入到一个新的List类bean，返回该新List类bean) -->
+		<property name="cityNames1" value="#{cities.![name]}" />
+		<property name="cityNames2" value="#{cities.![name + ',' + state]}" />
+		<property name="cityNames3" value="#{cities.?[population gt 100000].![name + ',' + state]}" />
+	</bean>
+</beans>
